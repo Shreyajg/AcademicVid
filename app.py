@@ -1,5 +1,12 @@
 import streamlit as st
 st.write("✅ Streamlit app loaded!")
+st.set_page_config(
+        page_title="PDF Text Key Points Extractor",
+        page_icon=":open_book:",
+        layout="wide",
+        initial_sidebar_state="expanded",
+    )
+    
 import PyPDF2
 from rake_nltk import Metric, Rake
 import nltk
@@ -64,12 +71,6 @@ def read_pdf(file):
 
 
 def main():
-    st.set_page_config(
-        page_title="PDF Text Key Points Extractor",
-        page_icon=":open_book:",
-        layout="wide",
-        initial_sidebar_state="expanded",
-    )
     
 
     st.sidebar.header("Upload PDF File")
