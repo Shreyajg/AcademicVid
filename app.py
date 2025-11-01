@@ -475,34 +475,42 @@ def map_image_heading(imagemap, image_bytes, headings):
 
 
 def get_single_video(audio_path, image_path, output_path):
-     # Load audio and get its duration
-    audio = MP3(audio_path)
-    audio_length = audio.info.length
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    # Load the single image and resize it
-    image = Image.open(image_path).resize((400, 400), Image.BICUBIC)
+    try:
+        # Load audio and get its duration
+        audio = MP3(audio_path)
+        audio_length = audio.info.length
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-    # Create a list with the single image
-    list_of_images = [image]
+        # Load the single image and resize it
+        image = Image.open(image_path).resize((400, 400), Image.BICUBIC)
 
-    # Calculate duration for each frame
-    duration = audio_length / len(list_of_images)
-    duration /= 1.5
+        # Create a list with the single image
+        list_of_images = [image]
 
-    # Save the single image as a gif
-    imageio.mimsave("image.gif", list_of_images, fps=1 / duration)
+        # Calculate duration for each frame
+        duration = audio_length / len(list_of_images)
+        duration /= 1.5
 
-    # Create video clip from the gif
-    video = VideoFileClip("image.gif")
+        # Save the single image as a gif
+        imageio.mimsave("image.gif", list_of_images, fps=1 / duration)
 
-    # Load audio clip
-    audio_clip = AudioFileClip(audio_path)
+        # Create video clip from the gif
+        video = VideoFileClip("image.gif")
 
-    # Set audio to the video clip
-    final_video = video.with_audio(audio_clip)
+        # Load audio clip
+        audio_clip = AudioFileClip(audio_path)
 
-    # Write the final video to the output path
-    final_video.write_videofile(output_path, fps=60, codec="libx264")
+        # ✅ Correct method to attach audio
+        final_video = video.set_audio(audio_clip)
+
+        # Write the final video to the output path
+        final_video.write_videofile(output_path, fps=60, codec="libx264", audio_codec="aac")
+
+        return output_path
+
+    except Exception as e:
+        st.error(f"Error generating video: {e}")
+        raise
     
 def concatenate_videos(folder_path, output_file):
     video_clips = []
