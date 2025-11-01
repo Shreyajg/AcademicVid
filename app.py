@@ -69,70 +69,30 @@ def read_pdf(file):
     return text
 
 
-def main():
-    
+def map_image_heading(imagemap, image_bytes, headings):
+    try:
+        # Get Gemini response for image
+        response = model.generate_content(
+            [image_bytes, "Describe this image in one line related to these topics: " + ", ".join(headings)]
+        )
 
-    st.sidebar.header("Upload PDF File")
-    st.subheader("Topics:")
+        # Safely extract text
+        text_output = None
+        if hasattr(response, "text"):
+            try:
+                text_output = response.text.strip()
+            except ValueError:
+                text_output = None
 
-    uploaded_file = st.sidebar.file_uploader("Choose a PDF file", type="pdf")
+        if not text_output:
+            text_output = "(No text response from model)"
 
-    if uploaded_file is not None:
-        st.sidebar.success("PDF file uploaded successfully!")
+        imagemap[text_output] = image_bytes
 
-        # Read PDF and display text
-        with st.spinner("Reading PDF..."):
-            time.sleep(5)
-            pdf_text = read_pdf(uploaded_file)
-            response = get_gemini_response(input_prompt1, pdf_text)
-            print(response)
-            # old one
-            # res = find_keywords(pdf_text)
-            # st.text_area("Extracted Text", response, height=400)
-            # print("Responses"+response)
-
-            ####trying run all in one stretch
-            responses_list = response.split("###")
-
-            # Display extracted image from pdf
-            all_images = []
-            all_images = extract_images_from_pdf(uploaded_file, all_images)
-            # print(all_images)
-            headings = []
-            for response in responses_list[1:]:
-                headings.append(response[: response.find("\n")])
-            print(headings)
-            imagemap = {}
-            for image_byte in all_images:
-                map_image_heading(imagemap, image_byte, headings)
-            print("map :", imagemap.keys())
-
-            # display headings
-            # Display headings
-            placeholders = [st.empty() for _ in range(len(responses_list) - 1)]
-
-            data = {}
-            for i, single_response in enumerate(responses_list[1:]):
-                response_dic = {}
-                response_dic["heading"] = single_response[: single_response.find("\n")]
-                response_dic["content"] = single_response[
-                    single_response.find("\n") + 1 :
-                ]
-                placeholders[i].button(
-                    response_dic["heading"],
-                    key=response_dic["heading"],
-                    on_click=lambda key=response_dic["heading"]: information(
-                        data, imagemap, key
-                    ),
-                )
-                data[response_dic["heading"]] = response_dic
-            print("Data ", data)
-
-            success_placeholder = st.empty()
-            success_placeholder.success("Processing completed!")
-            time.sleep(3)
-            success_placeholder.empty()
-
+    except Exception as e:
+        # In case the model or image fails entirely
+        st.warning(f"Error mapping image: {e}")
+        imagemap["(Error processing image)"] = image_bytes
 
 # increasing the audio speed
 def increase_audio_speed(input_audio_path, output_audio_path, speed_factor):
