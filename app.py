@@ -69,30 +69,70 @@ def read_pdf(file):
     return text
 
 
-def map_image_heading(imagemap, image_bytes, headings):
-    try:
-        # Get Gemini response for image
-        response = model.generate_content(
-            [image_bytes, "Describe this image in one line related to these topics: " + ", ".join(headings)]
-        )
+def main():
+    
 
-        # Safely extract text
-        text_output = None
-        if hasattr(response, "text"):
-            try:
-                text_output = response.text.strip()
-            except ValueError:
-                text_output = None
+    st.sidebar.header("Upload PDF File")
+    st.subheader("Topics:")
 
-        if not text_output:
-            text_output = "(No text response from model)"
+    uploaded_file = st.sidebar.file_uploader("Choose a PDF file", type="pdf")
 
-        imagemap[text_output] = image_bytes
+    if uploaded_file is not None:
+        st.sidebar.success("PDF file uploaded successfully!")
 
-    except Exception as e:
-        # In case the model or image fails entirely
-        st.warning(f"Error mapping image: {e}")
-        imagemap["(Error processing image)"] = image_bytes
+        # Read PDF and display text
+        with st.spinner("Reading PDF..."):
+            time.sleep(5)
+            pdf_text = read_pdf(uploaded_file)
+            response = get_gemini_response(input_prompt1, pdf_text)
+            print(response)
+            # old one
+            # res = find_keywords(pdf_text)
+            # st.text_area("Extracted Text", response, height=400)
+            # print("Responses"+response)
+
+            ####trying run all in one stretch
+            responses_list = response.split("###")
+
+            # Display extracted image from pdf
+            all_images = []
+            all_images = extract_images_from_pdf(uploaded_file, all_images)
+            # print(all_images)
+            headings = []
+            for response in responses_list[1:]:
+                headings.append(response[: response.find("\n")])
+            print(headings)
+            imagemap = {}
+            for image_byte in all_images:
+                map_image_heading(imagemap, image_byte, headings)
+            print("map :", imagemap.keys())
+
+            # display headings
+            # Display headings
+            placeholders = [st.empty() for _ in range(len(responses_list) - 1)]
+
+            data = {}
+            for i, single_response in enumerate(responses_list[1:]):
+                response_dic = {}
+                response_dic["heading"] = single_response[: single_response.find("\n")]
+                response_dic["content"] = single_response[
+                    single_response.find("\n") + 1 :
+                ]
+                placeholders[i].button(
+                    response_dic["heading"],
+                    key=response_dic["heading"],
+                    on_click=lambda key=response_dic["heading"]: information(
+                        data, imagemap, key
+                    ),
+                )
+                data[response_dic["heading"]] = response_dic
+            print("Data ", data)
+
+            success_placeholder = st.empty()
+            success_placeholder.success("Processing completed!")
+            time.sleep(3)
+            success_placeholder.empty()
+
 
 # increasing the audio speed
 def increase_audio_speed(input_audio_path, output_audio_path, speed_factor):
@@ -407,19 +447,31 @@ def get_image_prompt(image_url):
 
 
 
-def map_image_heading(imagemap, image_bytes, heading):
-    img = Image.open(io.BytesIO(image_bytes))
-    model = genai.GenerativeModel("gemini-2.0-flash-lite")
-    response = model.generate_content(
-        [
-            "Pick one heading that suits the image omong the following headings provided dont give discription just pick one: "
-            + str(",".join(heading)),
-            img,
-        ],
-        stream=True,
-    )
-    response.resolve()
-    imagemap[response.text] = image_bytes
+def map_image_heading(imagemap, image_bytes, headings):
+    try:
+        # Get Gemini response for image
+        response = model.generate_content(
+            [image_bytes, "Describe this image in one line related to these topics: " + ", ".join(headings)]
+        )
+
+        # Safely extract text
+        text_output = None
+        if hasattr(response, "text"):
+            try:
+                text_output = response.text.strip()
+            except ValueError:
+                text_output = None
+
+        if not text_output:
+            text_output = "(No text response from model)"
+
+        imagemap[text_output] = image_bytes
+
+    except Exception as e:
+        # In case the model or image fails entirely
+        st.warning(f"Error mapping image: {e}")
+        imagemap["(Error processing image)"] = image_bytes
+
 
 
 def get_single_video(audio_path, image_path, output_path):
