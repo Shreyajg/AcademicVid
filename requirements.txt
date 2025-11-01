@@ -64,3 +64,4 @@ validators==0.22.0
 zipp==3.17.0
 PyMuPDF==1.24.1
 gTTS==2.5.1
+mutagen==1.47.0
