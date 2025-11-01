@@ -1,5 +1,4 @@
 import streamlit as st
-st.write("✅ Streamlit app loaded!")
 st.set_page_config(
         page_title="PDF Text Key Points Extractor",
         page_icon=":open_book:",
