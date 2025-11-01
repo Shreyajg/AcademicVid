@@ -31,7 +31,7 @@ from mutagen.mp3 import MP3
 from PIL import Image
 import imageio
 from pathlib import Path
-from moviepy import VideoFileClip, AudioFileClip, concatenate_videoclips
+from moviepy.editor import VideoFileClip, AudioFileClip, concatenate_videoclips
 import os
 from pydub import AudioSegment
 from PIL import UnidentifiedImageError
