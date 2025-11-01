@@ -448,8 +448,9 @@ def get_image_prompt(image_url):
 
 
 def map_image_heading(imagemap, image_bytes, headings):
+    model = genai.GenerativeModel("gemini-2.0-flash-lite")
     try:
-        model = genai.GenerativeModel("gemini-2.0-flash-lite")
+       
 
         # Get Gemini response for image
         response = model.generate_content(
