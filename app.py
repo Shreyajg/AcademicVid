@@ -472,7 +472,7 @@ def map_image_heading(imagemap, image_bytes, headings):
 
     except Exception as e:
         # In case the model or image fails entirely
-        st.warning(f"Error mapping image: {e}")
+        
         imagemap["(Error processing image)"] = image_bytes
 
 
