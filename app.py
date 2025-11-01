@@ -1,4 +1,5 @@
 import streamlit as st
+st.write("✅ Streamlit app loaded!")
 import PyPDF2
 from rake_nltk import Metric, Rake
 import nltk
