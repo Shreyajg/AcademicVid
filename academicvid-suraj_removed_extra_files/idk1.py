@@ -39,7 +39,7 @@ from google.api_core.exceptions import ResourceExhausted
 nltk.download("stopwords")
 nltk.download("punkt")
 
-genai.configure(api_key="AIzaSyAG2Sxh8oUSNVWYuxoZ8ZV8TcnHOd81apM")
+genai.configure(api_key="AIzaSyCZt5PfJW1i5iBXbT6CvW-GMnw_3wSVH0Q")
 input_prompt1 = """
 You are a student studying for an exam and you need quick notes with a deep understanding of the topic with given text, your task is to give me key points topic-wise summary of the following content in simple text only. The topic headings should strictly start with a ### symbol not in bold.
 """
@@ -168,119 +168,141 @@ def information(data, imagemap, topic):
     </style>""",
         unsafe_allow_html=True,
     )
+
     progress_bar_placeholder.progress(0)
-    
+    print("Topic ", topic)
     placeholder0 = st.empty()
     placeholder1 = st.empty()
     placeholder2 = st.empty()
-    
-    try:
-        if topic in imagemap:
-            placeholder0.subheader(topic)
-            pic1 = Image.open(io.BytesIO(imagemap[topic])).convert("RGB")
-            os.makedirs("images", exist_ok=True)
-            pic1.save("images/pic1.jpg")
+    if topic in imagemap:
+        placeholder0.subheader(topic)
+        pic1 = Image.open(io.BytesIO(imagemap[topic]))
+        if not os.path.exists("images"):
+            os.makedirs("images")
+        pic1.save("images/pic1.jpg")
+        temp = get_custom_search_results(topic)
+        print(temp)
+        c = 2
+        for i in temp[:3]:
+            response = requests.get(i)
+            if response.status_code == 200:
+                pic = Image.open(BytesIO(response.content))
+                if not os.path.exists("images"):
+                    os.makedirs("images")
+                if pic.mode.endswith("A"):
+                    # Convert image to RGB mode if it has an alpha channel
+                    pic = pic.convert("RGB")
+                else:
+                    # Convert other modes to RGB
+                    pic = pic.convert("RGB")
+                # if pic.mode == 'RGBA' or pic.mode == 'P':
+                #     pic = pic.convert('RGB')
+                pic.save(f"images/pic{c}.jpg")
+                c = c + 1
+        progress += 10
+        video_status_placeholder.info(f"Generating video... {progress}% .")
+        progress_bar_placeholder.progress(10)
+        my_text_original = ""
+        my_text_original = get_discription(imagemap[topic])
+        bad_chars = [";", ":", "!", "*", "#", "-"]
+        for i in bad_chars:
+            my_text = my_text_original.replace(i, "")
+        myobj = gTTS(text=my_text, lang="en", slow=False)
+        myobj.save("welcome.mp3")
+        increase_audio_speed("welcome.mp3", "welcome_fast.mp3", speed_factor=1.3)
+        get_single_video(f"welcome_fast.mp3", "images/pic1.jpg", "videos/video1.mp4")
 
-            temp = get_custom_search_results(topic) or []
-            c = 2
-            for i in temp[:3]:
-                try:
-                    response = requests.get(i, timeout=10)
-                    response.raise_for_status()
-                    pic = Image.open(BytesIO(response.content)).convert("RGB")
-                    pic.save(f"images/pic{c}.jpg")
-                    c += 1
-                except (OSError, requests.RequestException):
-                    continue  # Skip problematic images
-
-            progress += 10
-            video_status_placeholder.info(f"Generating video... {progress}% .")
-            progress_bar_placeholder.progress(progress)
-
-            my_text_original = clean_text(get_discription(imagemap[topic]))
-            my_text = "".join([ch for ch in my_text_original if ch not in [";", ":", "!", "*", "#", "-"]])
+        my_text_original = ""
+        my_text = ""
+        transcript = ""
+        c = 2
+        # Iterate over each URL returned by get_custom_search_results(topic)
+        for url in temp[:3]:
+            progress += 20
+            # Generate prompt for the current URL and concatenate it to my_text
+            my_text_original = get_image_prompt(url)
+            bad_chars = [";", ":", "!", "*", "#", "-"]
+            for i in bad_chars:
+                my_text = my_text_original.replace(i, "")
+                transcript += my_text
             myobj = gTTS(text=my_text, lang="en", slow=False)
             myobj.save("welcome.mp3")
             increase_audio_speed("welcome.mp3", "welcome_fast.mp3", speed_factor=1.3)
-            get_single_video("welcome_fast.mp3", "images/pic1.jpg", "videos/video1.mp4")
+            get_single_video(
+                f"welcome_fast.mp3", f"images/pic{c}.jpg", f"videos/video{c}.mp4"
+            )
+            video_status_placeholder.info(f"Generating video... {progress}% .")
+            progress_bar_placeholder.progress(progress)
+            c = c + 1
 
-            transcript = ""
-            c = 2
-            for url in temp[:3]:
-                progress += 20
-                try:
-                    my_text_original = clean_text(get_image_prompt(url))
-                    my_text = "".join([ch for ch in my_text_original if ch not in [";", ":", "!", "*", "#", "-"]])
-                    transcript += my_text
-                    myobj = gTTS(text=my_text, lang="en", slow=False)
-                    myobj.save("welcome.mp3")
-                    increase_audio_speed("welcome.mp3", "welcome_fast.mp3", speed_factor=1.3)
-                    get_single_video(f"welcome_fast.mp3", f"images/pic{c}.jpg", f"videos/video{c}.mp4")
-                    c += 1
-                except Exception:
-                    continue
+        concatenate_videos("videos", "final_output.mp4")
+        placeholder1.video("final_output.mp4")
+        # placeholder2.text(data[topic]["content"])
+        with st.expander("See transcript"):
+            st.write(transcript)
 
-                video_status_placeholder.info(f"Generating video... {progress}% .")
-                progress_bar_placeholder.progress(progress)
-
-            concatenate_videos("videos", "final_output.mp4")
-            placeholder1.video("final_output.mp4")
-            with st.expander("See transcript"):
-                st.write(transcript)
-
-        else:
-            placeholder0.subheader(topic)
-            temp = get_custom_search_results(topic) or []
-            c = 1
-            for i in temp:
-                try:
-                    response = requests.get(i, timeout=10)
-                    response.raise_for_status()
-                    pic = Image.open(BytesIO(response.content)).convert("RGB")
-                    pic.save(f"images/pic{c}.jpg")
-                    c += 1
-                except (OSError, requests.RequestException):
-                    continue
-
-            progress += 10
+    else:
+        placeholder0.subheader(topic)
+        temp = get_custom_search_results(topic)
+        print(temp)
+        c = 1
+        for i in temp:
+            response = requests.get(i)
+            if response.status_code == 200:
+                pic = Image.open(BytesIO(response.content))
+                if not os.path.exists("images"):
+                    os.makedirs("images")
+                if pic.mode.endswith("A"):
+                    # Convert image to RGB mode if it has an alpha channel
+                    pic = pic.convert("RGB")
+                else:
+                    # Convert other modes to RGB
+                    pic = pic.convert("RGB")
+                # if pic.mode == 'RGBA':
+                #     pic = pic.convert('RGB')
+                pic.save(f"images/pic{c}.jpg")
+                c = c + 1
+        progress += 10
+        video_status_placeholder.info(f"Generating video... {progress}% .")
+        progress_bar_placeholder.progress(progress)
+        # Initialize an empty string to store concatenated prompts
+        my_text_original = ""
+        my_text = ""
+        c = 1
+        transcript = ""
+        # Iterate over each URL returned by get_custom_search_results(topic)
+        for url in get_custom_search_results(topic):
+            progress += 20
+            
+            # Generate prompt for the current URL and concatenate it to my_text
+            my_text_original = get_image_prompt(url)
+            bad_chars = [";", ":", "!", "*", "#", "-"]
+            for i in bad_chars:
+                my_text = my_text_original.replace(i, "")
+                transcript += my_text
+            myobj = gTTS(text=my_text, lang="en", slow=False)
+            myobj.save("welcome.mp3")
+            increase_audio_speed("welcome.mp3", "welcome_fast.mp3", speed_factor=1.3)
+            get_single_video(
+                f"welcome_fast.mp3", f"images/pic{c}.jpg", f"videos/video{c}.mp4"
+            )
+            c = c + 1
             video_status_placeholder.info(f"Generating video... {progress}% .")
             progress_bar_placeholder.progress(progress)
 
-            transcript = ""
-            c = 1
-            for url in temp:
-                progress += 20
-                try:
-                    my_text_original = clean_text(get_image_prompt(url))
-                    my_text = "".join([ch for ch in my_text_original if ch not in [";", ":", "!", "*", "#", "-"]])
-                    transcript += my_text
-                    myobj = gTTS(text=my_text, lang="en", slow=False)
-                    myobj.save("welcome.mp3")
-                    increase_audio_speed("welcome.mp3", "welcome_fast.mp3", speed_factor=1.3)
-                    get_single_video(f"welcome_fast.mp3", f"images/pic{c}.jpg", f"videos/video{c}.mp4")
-                    c += 1
-                except Exception:
-                    continue
-
-                video_status_placeholder.info(f"Generating video... {progress}% .")
-                progress_bar_placeholder.progress(progress)
-
-            concatenate_videos("videos", "final_output.mp4")
-            placeholder1.video("final_output.mp4")
-            with st.expander("See transcript"):
-                st.write(transcript)
-
-        video_status_placeholder.info(f"Generating video... 100%.")
-        progress_bar_placeholder.progress(100)
-        time.sleep(3)
-        progress_bar_placeholder.empty()
-        video_status_placeholder.empty()
-        video_status_placeholder.info("Video generation completed!")
-        time.sleep(3)
-        video_status_placeholder.empty()
-    
-    except Exception as e:
-        st.error(f"Error processing topic '{topic}': {e}")
+        concatenate_videos("videos", "final_output.mp4")
+        placeholder1.video("final_output.mp4")
+        # placeholder2.text(data[topic]["content"])
+        with st.expander("See transcript"):
+            st.write(transcript)
+    video_status_placeholder.info(f"Generating video... 100%.")
+    progress_bar_placeholder.progress(100)
+    time.sleep(3)
+    progress_bar_placeholder.empty()
+    video_status_placeholder.empty()
+    video_status_placeholder.info("Video generation completed!")
+    time.sleep(3)
+    video_status_placeholder.empty()
 
 
 # not implemented yet must be searched here first before searching google for images. Need to crack find page number in pdf for easy use
@@ -335,49 +357,43 @@ def get_custom_search_results(query, search_type="image"):
 
     # Define the parameters
     params = {
-        "key": "AIzaSyAG2Sxh8oUSNVWYuxoZ8ZV8TcnHOd81apM",
+        "key": "AIzaSyCZt5PfJW1i5iBXbT6CvW-GMnw_3wSVH0Q",
         "cx": "172574863a68442ad",
         "q": query,
         "searchType": search_type,
     }
     print(params)
-    retries = 3
-    for attempt in range(retries):
-        try:
-            response = requests.get(url, params=params, timeout=10)
-            if response.status_code == 200:
-                break
-            elif response.status_code == 429:
-                print("429 error, retrying...")
-                time.sleep(2 ** attempt)
-            else:
-                print("Error:", response.status_code)
-                return None
-        except requests.RequestException as e:
-            print("Request error:", e)
-            time.sleep(2 ** attempt)
+    # Make the GET request
+    response = requests.get(url, params=params)
+    print(response)
+    # Check if the request was successful (status code 200)
+    if response.status_code == 200:
+        # Parse the JSON response
+        data = response.json()
+
+        # Get the items inside the response
+        items = data.get("items", [])
+        link_list = []
+        # for i in range(0,4):
+
+        #     link_list.append(items[i]["link"])
+        counter = 0
+        for item in items:
+            try:
+                url = item["link"]
+                get_image_prompt(url)  # Check if the image can be processed
+                link_list.append(url)
+                counter += 1
+                if counter >= 4:
+                    break  # Stop fetching URLs once 4 valid URLs are obtained
+            except UnidentifiedImageError:
+                continue  # Skip this URL if it's not a valid image
+
+        return link_list
     else:
+        # If the request was not successful, return None
+        print("Error:", response.status_code)
         return None
-
-    data = response.json()
-    items = data.get("items", [])
-    link_list = []
-
-    for item in items:
-        try:
-            img_url = item["link"]
-            # Test if image can be opened
-            resp = requests.get(img_url, timeout=5)
-            pic = Image.open(BytesIO(resp.content))
-            if pic.mode != "RGB":
-                pic = pic.convert("RGB")
-            link_list.append(img_url)
-            if len(link_list) >= 4:
-                break
-        except (UnidentifiedImageError, OSError, requests.RequestException):
-            continue
-
-    return link_list
 
 def get_discription(image_bytes):
     img = Image.open(io.BytesIO(image_bytes))
@@ -415,29 +431,19 @@ def get_image_prompt(image_url):
     return response.text
 
 
-def map_image_heading(imagemap, image_bytes, headings):
+def map_image_heading(imagemap, image_bytes, heading):
+    img = Image.open(io.BytesIO(image_bytes))
     model = genai.GenerativeModel("gemini-2.0-flash")
-    try:
-        if not isinstance(image_bytes, Image.Image):
-            img = Image.open(io.BytesIO(image_bytes))
-            if img.mode != "RGB":
-                img = img.convert("RGB")
-            image_bytes = io.BytesIO()
-            img.save(image_bytes, format="JPEG")
-            image_bytes = image_bytes.getvalue()
-
-        # Get Gemini response for image
-        response = model.generate_content(
-            [image_bytes, "Describe this image in one line related to these topics: " + ", ".join(headings)]
-        )
-
-        text_output = getattr(response, "text", "(No text response from model)").strip()
-        imagemap[text_output] = image_bytes
-
-    except Exception as e:
-        print(f"Error processing image: {e}")
-        imagemap["(Error processing image)"] = image_bytes
-
+    response = model.generate_content(
+        [
+            "Pick one heading that suits the image omong the following headings provided dont give discription just pick one: "
+            + str(",".join(heading)),
+            img,
+        ],
+        stream=True,
+    )
+    response.resolve()
+    imagemap[response.text] = image_bytes
 
 
 def get_single_video(audio_path, image_path, output_path):
