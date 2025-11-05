@@ -351,7 +351,7 @@ def get_custom_search_results(query, search_type="image"):
 
     # Define the parameters
     params = {
-        "key": "AIzaSyAwnw0Hgi8kTKXSVZQ-xUyORQcRtvUntOo",
+        "key": "AIzaSyAG2Sxh8oUSNVWYuxoZ8ZV8TcnHOd81apM",
         "cx": "172574863a68442ad",
         "q": query,
         "searchType": search_type,
@@ -452,10 +452,11 @@ def map_image_heading(imagemap, image_bytes, headings):
     try:
        
 
-        # Get Gemini response for image
+        img = Image.open(io.BytesIO(image_bytes))
         response = model.generate_content(
-            [image_bytes, "Describe this image in one line related to these topics: " + ", ".join(headings)]
+            [img, "Describe this image in one line related to these topics: " + ", ".join(headings)]
         )
+
 
         # Safely extract text
         text_output = None
