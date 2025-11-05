@@ -45,7 +45,7 @@ from PIL import UnidentifiedImageError
 nltk.download("stopwords")
 nltk.download("punkt")   
 
-genai.configure(api_key="AIzaSyCbS81ajZfpFKYU2SSVb4nCDSZD5it6LO4")
+genai.configure(api_key="AIzaSyAG2Sxh8oUSNVWYuxoZ8ZV8TcnHOd81apM")
 input_prompt1 = """
 You are a student studying for an exam and you need quick notes with a deep understanding of the topic with given text, your task is to give me key points topic-wise summary of the following content in simple text only. The topic headings should strictly start with a ### symbol not in bold.
 """
