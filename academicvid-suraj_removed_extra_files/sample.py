@@ -40,7 +40,7 @@ from reportlab.pdfgen import canvas
 nltk.download("stopwords")
 nltk.download("punkt")
 
-genai.configure(api_key="AIzaSyAiM3PsZN_imRBzwYBLfcdXJ91tu2V0p60")
+genai.configure(api_key="AIzaSyAG2Sxh8oUSNVWYuxoZ8ZV8TcnHOd81apM")
 input_prompt1 = """
 You are a student studying for an exam and you need quick notes with a deep understanding of the topic with given text, your task is to give me key points topic-wise summary of the following content in simple text only. The topic headings should strictly start with a ### symbol not in bold.
 """
@@ -54,7 +54,7 @@ def get_gemini_response(input, pdf_content):
 def fetch_pdfs_from_web(query):
     url = "https://www.googleapis.com/customsearch/v1"
     params = {
-        "key": "AIzaSyAiM3PsZN_imRBzwYBLfcdXJ91tu2V0p60",
+        "key": "AIzaSyAG2Sxh8oUSNVWYuxoZ8ZV8TcnHOd81apM",
         "cx": "a17745477c77b4043",
         "q": query + " filetype:pdf",
     }
