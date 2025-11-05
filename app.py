@@ -452,11 +452,10 @@ def map_image_heading(imagemap, image_bytes, headings):
     try:
        
 
-        img = Image.open(io.BytesIO(image_bytes))
+        # Get Gemini response for image
         response = model.generate_content(
-            [img, "Describe this image in one line related to these topics: " + ", ".join(headings)]
+            [image_bytes, "Describe this image in one line related to these topics: " + ", ".join(headings)]
         )
-
 
         # Safely extract text
         text_output = None
