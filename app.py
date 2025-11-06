@@ -38,8 +38,8 @@ import time
 from google.api_core.exceptions import ResourceExhausted
 nltk.download("stopwords")
 nltk.download("punkt")
-api_key = os.getenv("GOOGLE_API_KEY")
-cse_id = os.getenv("CUSTOM_SEARCH_CX")
+api_key = st.secrets["GOOGLE_API_KEY"]
+cse_id = st.secrets["CUSTOM_SEARCH_CX"]
 genai.configure(api_key=api_key)
 input_prompt1 = """
 You are a student studying for an exam and you need quick notes with a deep understanding of the topic with given text, your task is to give me key points topic-wise summary of the following content in simple text only. The topic headings should strictly start with a ### symbol not in bold.
