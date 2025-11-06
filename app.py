@@ -409,19 +409,37 @@ def get_image_prompt(image_url):
     return response.text
 
 
-def map_image_heading(imagemap, image_bytes, heading):
-    img = Image.open(io.BytesIO(image_bytes))
-    model = genai.GenerativeModel("gemini-2.0-flash-lite")
-    response = model.generate_content(
-        [
-            "Pick one heading that suits the image omong the following headings provided dont give discription just pick one: "
-            + str(",".join(heading)),
-            img,
-        ],
-        stream=True,
-    )
-    response.resolve()
-    imagemap[response.text] = image_bytes
+
+model = genai.GenerativeModel("gemini-2.0-flash-lite")
+def map_image_heading(imagemap, image_bytes, headings):
+     
+    try:
+       
+
+        # Get Gemini response for image
+        response = model.generate_content(
+            [image_bytes, "Pick one heading that suits the image omong the following headings provided dont give discription just pick one: " + ", ".join(headings)]
+        )
+
+        # Safely extract text
+        text_output = None
+        if hasattr(response, "text"):
+            try:
+                text_output = response.text.strip()
+            except ValueError:
+                text_output = None
+
+        if not text_output:
+            text_output = "(No text response from model)"
+
+        imagemap[text_output] = image_bytes
+
+    except Exception as e:
+        # In case the model or image fails entirely
+        
+        imagemap["(Error processing image)"] = image_bytes
+
+
 
 
 def get_single_video(audio_path, image_path, output_path):
