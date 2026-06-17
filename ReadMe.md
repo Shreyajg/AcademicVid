@@ -1,5 +1,8 @@
 AcademicVid 📚🎥
 
+check it out here:
+https://academicvid-43ncy5utis6kwfdybwpubb.streamlit.app/
+
 AcademicVid is an AI-powered educational video generation platform that transforms textbook PDFs into short topic-wise learning videos. The system automatically extracts content from textbooks, generates concise summaries, finds relevant visuals, creates narrated explanations, and compiles them into educational videos suitable for students.
 
 🚀 Features
