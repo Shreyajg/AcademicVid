@@ -29,7 +29,7 @@ Combines multiple segments into a complete educational video.
 Displays generated videos directly in the Streamlit interface
 
 1. Clone Repository
-git clone https://github.com/yourusername/AcademicVid.git
+git clone https://github.com/Shreyajg/AcademicVid.git
 cd AcademicVid
 2. Create Virtual Environment
 python -m venv venv
